@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from evi.report import write as write_report
 from evi.vault import Provenance, Vault
 
 
@@ -51,14 +52,34 @@ def cmd_get(vault: Vault, args) -> None:
 
 
 def cmd_claim(vault: Vault, args) -> None:
-    claim_id = vault.catalog.add_claim(args.statement, args.status, args.test, args.reference)
+    claim_id = vault.catalog.add_claim(args.statement, args.status, args.test, args.reference, args.topic)
     vault.catalog.commit()
     print(f"claim {claim_id}")
 
 
 def cmd_link(vault: Vault, args) -> None:
-    vault.catalog.link(args.claim, args.item, args.role, args.detail)
+    vault.catalog.link(args.claim, args.item, args.role, args.detail, args.offset, args.length)
     vault.catalog.commit()
+
+
+def cmd_publish(vault: Vault, args) -> None:
+    if args.items:
+        marks = ", ".join("?" * len(args.items))
+        count = vault.catalog.set_publish(f"id IN ({marks})", tuple(args.items), args.policy)
+    else:
+        where, params = "collection = ?", [args.collection]
+        if args.kind:
+            where += " AND kind = ?"
+            params.append(args.kind)
+        count = vault.catalog.set_publish(where, tuple(params), args.policy)
+    vault.catalog.commit()
+    print(f"{count} items set to '{args.policy}'")
+
+
+def cmd_report(vault: Vault, args) -> None:
+    out = Path(args.out)
+    report = write_report(vault, args.topic, args.title or args.topic, out)
+    print(f"{len(report.claims)} claims, {len(report.sources)} sources -> {out}/report.{{md,html,wiki}}")
 
 
 def cmd_claims(vault: Vault, _args) -> None:
@@ -130,6 +151,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--status", required=True, choices=["checked", "guess", "refuted"])
     p.add_argument("--test", help="what would settle it")
     p.add_argument("--reference", help="where it's written up")
+    p.add_argument("--topic", help="the report it belongs to")
     p.set_defaults(func=cmd_claim)
 
     p = sub.add_parser("link", help="link an item to a claim as evidence")
@@ -137,7 +159,22 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("item", type=int)
     p.add_argument("--role", default="supports", choices=["supports", "contradicts", "context"])
     p.add_argument("--detail", help="the offset, screen text etc. relied on")
+    p.add_argument("--offset", type=lambda v: int(v, 0), help="start of the bytes relied on (e.g. 0x328DE)")
+    p.add_argument("--length", type=lambda v: int(v, 0), help="how many bytes (reports quote at most 64)")
     p.set_defaults(func=cmd_link)
+
+    p = sub.add_parser("publish", help="set what reports may do with items: embed, excerpt, cite, never")
+    p.add_argument("policy", choices=["embed", "excerpt", "cite", "never"])
+    p.add_argument("--items", type=int, nargs="+")
+    p.add_argument("--collection")
+    p.add_argument("--kind")
+    p.set_defaults(func=cmd_publish)
+
+    p = sub.add_parser("report", help="write a topic's claims and evidence as Markdown, HTML and MediaWiki")
+    p.add_argument("topic")
+    p.add_argument("-o", "--out", required=True, help="output directory")
+    p.add_argument("--title")
+    p.set_defaults(func=cmd_report)
 
     sub.add_parser("claims", help="list claims").set_defaults(func=cmd_claims)
     sub.add_parser("verify", help="re-hash every item").set_defaults(func=cmd_verify)

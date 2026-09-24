@@ -47,8 +47,28 @@ uv run evi claim "Wizard fame is u16 at +0x24" --status checked --reference live
 uv run evi link 1 42 --detail "UGE entry 'Fame' at 0x0A0C"
 uv run evi stats
 uv run evi verify
+uv run evi claim "Fame: u16 at +0x24" --status checked --topic wizard-record
+uv run evi link 1 223 --detail "11 after gaining fame" --offset 0x328DE --length 2
+uv run evi publish embed --collection mom-live-2026-09-23 --kind image
+uv run evi report wizard-record -o reports/wizard-record --title "The wizard record"
 uv run --extra ui evi serve                  # browse in Datasette at http://127.0.0.1:8001
 ```
+
+## Reports
+
+`evi report TOPIC` writes a topic's claims with their evidence as
+`report.md`, a printable `report.html` (print it to PDF from a browser)
+and `report.wiki` (MediaWiki markup), plus the figures they use. Each
+claim lists its sources and shows the exact bytes it rests on.
+
+What a report may carry is set per item with `evi publish`:
+
+| Policy | Reports may |
+| --- | --- |
+| `embed` | show it in full, e.g. our own screenshots as figures |
+| `excerpt` | quote the linked bytes only, at most 64 (RAM dumps: they hold the game's own code and data) |
+| `cite` (default) | name it with its provenance, never copy it (third-party files) |
+| `never` | name it only (game files) |
 
 ## Catalogue
 
@@ -56,10 +76,10 @@ uv run --extra ui evi serve                  # browse in Datasette at http://127
 
 | Table | What |
 | --- | --- |
-| `items` | every piece of evidence: hash, size, kind (`ramdump`, `archive`, `image`, `document`, `binary`), storage, provenance, parent archive |
+| `items` | every piece of evidence: hash, size, kind (`ramdump`, `archive`, `image`, `document`, `binary`), storage, provenance, parent, publish policy |
 | `texts` | extracted text (FTS5): plain text, HTML, RTF, PDF |
-| `claims` | statement, status (`checked` / `guess` / `refuted`), the settling test, where it's written up |
-| `claim_evidence` | which items support, contradict or give context to which claim, and the detail relied on |
+| `claims` | statement, topic, status (`checked` / `guess` / `refuted`), the settling test, where it's written up |
+| `claim_evidence` | which items support, contradict or give context to which claim, the detail relied on, and the byte range (`offset`, `length`) |
 
 ## Develop
 

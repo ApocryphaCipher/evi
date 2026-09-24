@@ -71,3 +71,34 @@ def test_add_bytes_attaches_to_a_parent(tmp_path):
     assert (row["kind"], row["parent_id"]) == ("image", dump_id)
     assert vault.catalog.db.execute("SELECT storage FROM items WHERE id = ?", (dump_id,)).fetchone()[0] == "paged"
     assert vault.add_bytes(bytes(16 * 1024 * 1024), "cp.bin", "api://memory", prov) == dump_id
+
+
+def test_report_respects_publish_policy(tmp_path):
+    from evi import report
+
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "dump.bin").write_bytes(b"\x00" * 32 + b"Freya\x00" + b"\x00" * (16 * 1024 * 1024 - 38))
+    (src / "shot.png").write_bytes(b"\x89PNG fake")
+    (src / "notes.txt").write_bytes(b"third-party notes, name at 0x01")
+    vault = Vault(tmp_path / "vault")
+    vault.add_path(src, Provenance("t", source="test"), exclude=[])
+    ids = {r["name"]: r["id"] for r in vault.catalog.db.execute("SELECT id, name FROM items")}
+    vault.catalog.set_publish("id = ?", (ids["dump.bin"],), "excerpt")
+    vault.catalog.set_publish("id = ?", (ids["shot.png"],), "embed")
+
+    claim = vault.catalog.add_claim("Name at +0x01", "checked", None, None, topic="wiz")
+    vault.catalog.link(claim, ids["dump.bin"], "supports", "Freya", offset=32, length=500)
+    vault.catalog.link(claim, ids["shot.png"], "supports", "on screen")
+    vault.catalog.link(claim, ids["notes.txt"], "supports", "says so", offset=0, length=8)
+    vault.catalog.commit()
+
+    out = tmp_path / "out"
+    rep = report.write(vault, "wiz", "Wizard", out)
+    by_name = {e.source.name: e for e in rep.claims[0].evidence}
+    assert len(by_name["dump.bin"].excerpt[1]) == report.MAX_EXCERPT  # capped
+    assert by_name["notes.txt"].excerpt is None  # cite only: never quoted
+    assert (out / by_name["shot.png"].figure).exists()
+    md = (out / "report.md").read_text()
+    assert "Freya" in md and "third-party notes" not in md
+    assert (out / "report.html").exists() and "== Sources ==" in (out / "report.wiki").read_text()
