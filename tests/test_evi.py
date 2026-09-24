@@ -60,3 +60,14 @@ def test_claims_link_to_evidence(tmp_path):
     vault.catalog.link(claim, item_id, "supports", "+0x356")
     row = vault.catalog.db.execute("SELECT role, detail FROM claim_evidence").fetchone()
     assert (row["role"], row["detail"]) == ("supports", "+0x356")
+
+
+def test_add_bytes_attaches_to_a_parent(tmp_path):
+    vault = Vault(tmp_path / "vault")
+    prov = Provenance("live", source="api")
+    dump_id = vault.add_bytes(bytes(16 * 1024 * 1024), "cp.bin", "api://memory", prov)
+    shot_id = vault.add_bytes(b"\x89PNG fake", "cp.png", "api://screenshot", prov, parent_id=dump_id)
+    row = vault.catalog.db.execute("SELECT kind, parent_id FROM items WHERE id = ?", (shot_id,)).fetchone()
+    assert (row["kind"], row["parent_id"]) == ("image", dump_id)
+    assert vault.catalog.db.execute("SELECT storage FROM items WHERE id = ?", (dump_id,)).fetchone()[0] == "paged"
+    assert vault.add_bytes(bytes(16 * 1024 * 1024), "cp.bin", "api://memory", prov) == dump_id

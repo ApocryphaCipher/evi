@@ -43,6 +43,17 @@ class Vault:
         self.catalog.commit()
         return results
 
+    def add_bytes(
+        self, data: bytes, name: str, path: str, prov: Provenance,
+        parent_id: int | None = None, file_time: str | None = None,
+    ) -> int:
+        """Add evidence that doesn't come from a file (e.g. captured over an
+        API). `path` records where it came from; `parent_id` attaches it to
+        another item, such as a screenshot to the dump taken with it."""
+        item_id = self._add(data, name, path, parent_id, prov, file_time, depth=0)[0][0]
+        self.catalog.commit()
+        return item_id
+
     def _add(self, data, name, path, parent_id, prov, file_time, depth) -> list[tuple[int, str, bool]]:
         sha = sha256(data)
         existing = self.catalog.find_item(prov.collection, path, sha)
