@@ -8,7 +8,7 @@ from html.parser import HTMLParser
 from pypdf import PdfReader
 from striprtf.striprtf import rtf_to_text
 
-TEXT_SUFFIXES = {".txt", ".doc", ".diz", ".md", ".lst", ".nfo", ".cfg", ".bat", ".momod", ".mommod"}
+TEXT_SUFFIXES = {".txt", ".json", ".doc", ".diz", ".md", ".lst", ".nfo", ".cfg", ".bat", ".momod", ".mommod"}
 HTML_SUFFIXES = {".htm", ".html"}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".pcx"}
 ARCHIVE_SUFFIXES = {".zip"}
