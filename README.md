@@ -20,8 +20,9 @@ fork (the instrumented machine) and Mirror (the Master of Magic viewer).
 - **Claims are checked, guesses or refuted**, and a guess names the test
   that would settle it.
 - **Code and data are separate.** This repo is the tool. The evidence
-  lives in a vault directory (default `~/repo/evi-vault`, or `EVI_HOME`),
-  which is private: it holds other people's files and game data.
+  lives in a vault directory, one per subject (e.g. `~/repo/mom-evi-vault`
+  for Master of Magic), chosen with `EVI_HOME` or `--home`. Vaults are
+  private: they hold other people's files and game data.
 
 ## Storage
 
@@ -36,6 +37,7 @@ fork (the instrumented machine) and Mirror (the Master of Magic viewer).
 ## Use
 
 ```bash
+export EVI_HOME=~/repo/mom-evi-vault
 uv run evi add ~/DOS/MagicExtras --collection magicextras-2001 \
     --source "Kevin's archive, ~/DOS/MagicExtras" --license "third party, unknown"
 uv run evi search "wizard NEAR fame"         # SQLite FTS5 syntax
@@ -64,3 +66,7 @@ uv run --extra ui evi serve                  # browse in Datasette at http://127
 ```bash
 uv run pytest
 ```
+
+## Licence
+
+MIT. The licence covers Evi's code only, never the contents of a vault.

@@ -8,8 +8,6 @@ from pathlib import Path
 
 from evi.vault import Provenance, Vault
 
-DEFAULT_HOME = Path.home() / "repo" / "evi-vault"
-
 
 def cmd_add(vault: Vault, args) -> None:
     prov = Provenance(args.collection, args.source, args.author, args.license, args.note)
@@ -99,7 +97,7 @@ def cmd_serve(vault: Vault, args) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="evi", description="Evidence store and catalogue")
-    parser.add_argument("--home", type=Path, help=f"vault directory (default $EVI_HOME or {DEFAULT_HOME})")
+    parser.add_argument("--home", type=Path, help="vault directory (default $EVI_HOME)")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("add", help="add files or directory trees to the vault")
@@ -150,7 +148,9 @@ def main(argv: list[str] | None = None) -> None:
     p.set_defaults(func=cmd_serve)
 
     args = parser.parse_args(argv)
-    home = args.home or Path(os.environ.get("EVI_HOME", DEFAULT_HOME))
+    home = args.home or (Path(os.environ["EVI_HOME"]) if "EVI_HOME" in os.environ else None)
+    if home is None:
+        sys.exit("evi: say which vault: set EVI_HOME or pass --home")
     args.func(Vault(home), args)
 
 
