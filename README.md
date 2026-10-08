@@ -43,12 +43,13 @@ uv run evi add ~/DOS/MagicExtras --collection magicextras-2001 \
 uv run evi search "wizard NEAR fame"         # SQLite FTS5 syntax
 uv run evi show 42                           # provenance and linked claims
 uv run evi get 42 -o original.bin            # the exact original bytes
-uv run evi claim "Wizard fame is u16 at +0x24" --status checked --reference live-ram-map.md
+uv run evi claim "Fame: u16 at +0x24" --status checked --topic wizard-record \
+    --reference live-ram-map.md
 uv run evi link 1 42 --detail "UGE entry 'Fame' at 0x0A0C"
-uv run evi stats
-uv run evi verify
-uv run evi claim "Fame: u16 at +0x24" --status checked --topic wizard-record
 uv run evi link 1 223 --detail "11 after gaining fame" --offset 0x328DE --length 2
+uv run evi claims                            # list the claims
+uv run evi stats                             # counts and sizes
+uv run evi verify                            # re-hash every item
 uv run evi publish embed --collection mom-live-2026-09-23 --kind image
 uv run evi report wizard-record -o reports/wizard-record --title "The wizard record"
 uv run --extra ui evi serve                  # browse in Datasette at http://127.0.0.1:8001
@@ -86,6 +87,10 @@ What a report may carry is set per item with `evi publish`:
 ```bash
 uv run pytest
 ```
+
+Needs Python 3.14 or later (it uses the standard library's `compression.zstd`).
+How the vault is laid out on disk, plans and handoff notes are in
+[docs/](docs/README.md).
 
 ## Licence
 

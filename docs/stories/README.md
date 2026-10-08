@@ -1,0 +1,5 @@
+- [STORY-001](STORY-001-claim-and-evidence-messages.md): `Claim` and `Evidence` messages, and `evi export` writing them (EPIC-001) Not started
+- [STORY-002](STORY-002-import-claims.md): `evi import` reads an export, so claims can move between vaults (EPIC-001) Not started
+- [STORY-003](STORY-003-store-protobuf-streams-as-evidence.md): protobuf streams (hit logs, viewport frames) as a kind of evidence, with a safe publish default (EPIC-001) Not started
+- [STORY-004](STORY-004-show-decodes-streams.md): `evi show --decode` prints a stored stream's records (EPIC-001, stretch) Not started
+- [STORY-005](STORY-005-claims-cite-records.md): a claim can rest on record N of a stream, not only a byte range (EPIC-001, stretch) Not started
